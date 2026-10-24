@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ShipSafe | AST Taint, Scenario Simulation & Codemod Suite</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #090A0F; color: #E2E8F0; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .panel { background-color: #11131A; border: 1px solid #232734; }
+  </style>
+</head>
+<body class="min-h-screen p-6">
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <div class="panel rounded-lg p-5 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 text-xs mono uppercase bg-emerald-950 text-emerald-400 border border-emerald-800 rounded">PS-12 + PS-10 + PS-09 + PS-11</span>
+          <h1 class="text-xl font-semibold tracking-tight text-white">ShipSafe Core — Deterministic Security & Simulation Suite</h1>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">AST Taint Analysis • In-Memory WSGI Scenario Simulator • Third-Party Integration Auditor • SHA-256 Codemod Ledger</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <div class="text-xs uppercase text-slate-400">Readiness Score</div>
+          <div id="scoreDisplay" class="text-3xl font-bold mono text-red-400">--/100</div>
+        </div>
+        <button onclick="applyPatch('ALL')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded">
+          Approve All Codemods & Re-Simulate
+        </button>
+        <button onclick="resetDemo()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded border border-slate-700">
+          Reset Sandbox
+        </button>
+      </div>
+    </div>
+
+
+    <div class="panel rounded-lg p-4 flex flex-wrap items-center gap-3">
+      <select id="scanMode" class="bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs text-slate-200">
+        <option value="sandbox">Local Sandbox App (AST + 4 Multi-Round WSGI Scenarios)</option>
+        <option value="github_repo">Public GitHub Repo URL (Shallow Clone + AST + CVE Audit)</option>
+        <option value="live_url">Live Website / Vercel URL (Passive Security Header & CORS Audit)</option>
+      </select>
+      <input id="targetInput" type="text" placeholder="Optional: https://github.com/owner/repo or https://your-app.vercel.app" class="flex-1 bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs mono text-slate-200" />
+      <button onclick="runAudit()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded">
+        Run Deterministic Audit
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <div class="panel rounded-lg p-5 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">1. Multi-Scenario WSGI Simulation Engine</h2>
+          <span class="text-xs mono text-slate-400">In-Memory Test Client</span>
+        </div>
+        <div id="simContainer" class="space-y-3 text-xs"></div>
+
+        <div class="border-t border-slate-800 pt-4">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Human-in-the-Loop Deterministic Codemods</h3>
+          <div id="patchButtons" class="space-y-2"></div>
+        </div>
+      </div>
+
+
+      <div class="panel rounded-lg p-5 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">2. AST Taint, Vercel Config & Supply-Chain Findings</h2>
+          <span id="findingCount" class="text-xs mono text-slate-400">0 findings</span>
+        </div>
+        <div id="findingsContainer" class="space-y-3 max-h-[460px] overflow-y-auto pr-1 text-xs"></div>
+      </div>
+    </div>
+
+    <div class="panel rounded-lg p-5 space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">3. PS-11 Tamper-Evident Fix Integrity Ledger (SHA-256 Hash Chain)</h2>
+        <span class="text-xs mono text-slate-400">Cryptographic Chain of Custody</span>
+      </div>
+      <div id="ledgerContainer" class="text-xs mono space-y-2"></div>
+    </div>
+  </div>
+
+  <script>
+    async function runAudit() {
+      const mode = document.getElementById('scanMode').value;
+      const target_input = document.getElementById('targetInput').value.trim();
+      const res = await fetch('/api/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode, target_input })
+      });
+      const data = await res.json();
+      renderDashboard(data);
+    }
+
+    async function applyPatch(patch_key) {
+      const res = await fetch('/api/patch/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patch_key, approver_name: 'Pranav (Human Review)' })
+      });
+      const data = await res.json();
+      if (data.audit) renderDashboard(data.audit);
+    }
+
+    async function resetDemo() {
+      const res = await fetch('/api/demo/reset', { method: 'POST' });
+      const data = await res.json();
+      renderDashboard(data);
+    }
+
+    function renderDashboard(data) {
+      const scoreEl = document.getElementById('scoreDisplay');
+      scoreEl.textContent = `${data.readiness_score}/100`;
+      scoreEl.className = `text-3xl font-bold mono ${data.readiness_score >= 80 ? 'text-emerald-400' : data.readiness_score >= 50 ? 'text-amber-400' : 'text-red-400'}`;
+
+      const simEl = document.getElementById('simContainer');
+      if (data.passive_url_report) {
+        const rep = data.passive_url_report;
+        simEl.innerHTML = `<div class="p-3 bg-slate-900 rounded border border-slate-800 space-y-2">
+          <div class="font-semibold text-white">Passive URL Header Inspection: ${rep.url} (HTTP ${rep.status_code || 'ERR'})</div>
+          <div class="text-slate-400">Platform Detected: ${rep.server_platform || 'N/A'}</div>
+          ${(rep.header_findings || []).map(h => `<div class="text-amber-400 mono">• [${h.severity}] ${h.issue}</div>`).join('')}
+        </div>`;
+      } else {
+        simEl.innerHTML = (data.simulations || []).map(sim => `
+          <div class="p-3 bg-slate-900 rounded border ${sim.passed_defense ? 'border-emerald-800/60' : 'border-red-900/60'} space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-white">${sim.scenario_id}: ${sim.scenario_name}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] mono ${sim.passed_defense ? 'bg-emerald-950 text-emerald-400' : 'bg-red-950 text-red-400'}">
+                ${sim.passed_defense ? 'DEFENSE VERIFIED (0 LEAKS)' : `FAILED (${sim.vulnerable_responses}/${sim.iterations_executed} EXPOSED)`}
+              </span>
+            </div>
+            <div class="text-slate-400">Category: ${sim.category} • Latency: ${sim.latency_ms}ms</div>
+            <div class="mono text-[11px] text-slate-300 bg-black/40 p-2 rounded space-y-0.5">
+              ${sim.evidence_log.map(l => `<div>> ${l}</div>`).join('')}
+            </div>
+          </div>
+        `).join('');
+      }
+
+
+      const patchEl = document.getElementById('patchButtons');
+      const patches = data.available_patches || {};
+      patchEl.innerHTML = Object.entries(patches).map(([key, info]) => `
+        <div class="flex items-center justify-between p-2.5 bg-slate-900 rounded border border-slate-800 text-xs">
+          <div>
+            <span class="mono text-blue-400">[${info.rule_id}]</span>
+            <span class="text-slate-200 ml-1">${info.description}</span>
+          </div>
+          ${info.applied
+            ? '<span class="px-2 py-1 bg-emerald-950 text-emerald-400 mono text-[10px] rounded">PATCH VERIFIED</span>'
+            : `<button onclick="applyPatch('${key}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-[11px]">Approve & Patch</button>`
+          }
+        </div>
+      `).join('');
+
+      const findings = data.static_findings || [];
+      document.getElementById('findingCount').textContent = `${findings.length} static/integration findings`;
+      document.getElementById('findingsContainer').innerHTML = findings.map(f => `
+        <div class="p-3 bg-slate-900 rounded border border-slate-800 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-white">[${f.rule_id}] ${f.title}</span>
+            <span class="px-2 py-0.5 rounded text-[10px] mono bg-red-950 text-red-400 border border-red-800">${f.severity}</span>
+          </div>
+          <div class="text-slate-400">${f.category} • Target: <span class="text-slate-200">${f.integration_target}</span></div>
+          <div class="mono text-[11px] bg-black/50 p-2 rounded text-amber-300">Line ${f.line_number}: ${f.code_snippet}</div>
+          <div class="mono text-[11px] text-slate-400">
+            ${(f.taint_trace || []).map(t => `<div>↳ ${t}</div>`).join('')}
+          </div>
+        </div>
+      `).join('');
+
+
+      const ledger = data.ledger || [];
+      const ledEl = document.getElementById('ledgerContainer');
+      ledEl.innerHTML = ledger.length === 0
+        ? '<div class="text-slate-500">No patches applied yet. Approve a codemod above to record a SHA-256 chain-of-custody entry.</div>'
+        : ledger.map(e => `
+          <div class="p-2.5 bg-slate-900 rounded border border-slate-800 flex flex-wrap justify-between gap-2">
+            <div><span class="text-emerald-400">${e.entry_id}</span> • Rule <span class="text-white">${e.rule_id}</span> • Approved by: ${e.approved_by}</div>
+            <div class="text-slate-400">Before: <span class="text-red-400">${e.sha256_before.slice(0, 12)}...</span> → After: <span class="text-emerald-400">${e.sha256_after.slice(0, 12)}...</span> | Chain Hash: <span class="text-blue-400">${e.entry_hash.slice(0, 14)}...</span></div>
+          </div>
+        `).join('');
+    }
+
+    runAudit();
+  </script>
+</body>
+</html>
