@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ],
+  "env": {
+    "OPENAI_API_KEY": "sk-proj-889900112233445566778899aabbccddeeff"
+  }
+}
