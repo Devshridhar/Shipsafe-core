@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: shipsafe-core
+    name: shipsafe
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn api.server:app --host 0.0.0.0 --port $PORT
